@@ -1,2 +1,2 @@
 # Brute_Force_Ebola_Improvement
-...
+I recently improved a brute force script targeting user accounts, particularly admin, by converting it into Python. This rewrite enhances flexibility and boosts password testing speed for more efficient penetration testing. Additionally, I collaborated with 3xtr3mX to enhance the Ebola Man script, tripling its speed and increasing its efficiency. These optimizations make both scripts more powerful, faster, and robust for handling large-scale targets.
